@@ -39,6 +39,9 @@ class IditAgent:
         entry_type: str = "note",
         description: str = "",
         tags: list[str] | None = None,
+        opens_at: str = "",
+        confidential: bool = False,
+        sealed_ref: str = "",
     ) -> dict:
         """
         Mint a new entry to the chain.
@@ -46,9 +49,13 @@ class IditAgent:
         Args:
             content: The text content to record.
             entry_type: Category — "note", "memory", "decision", "milestone",
-                        "document", "letter", "morning_report", etc.
+                        "document", "letter", "feeling", "morning_report",
+                        "battle_plan", "seal", etc.
             description: Short description (shows in timeline).
             tags: Optional list of tags.
+            opens_at: ISO date string for timelock (e.g., "2036-01-01"). Empty = no lock.
+            confidential: If True, auto-timelock (viewer handles display).
+            sealed_ref: Entry ID to seal after the fact.
 
         Returns:
             Dict with entry_id, entry_hash, signature, created_at, etc.
@@ -61,6 +68,9 @@ class IditAgent:
             "entry_type": entry_type,
             "description": description,
             "tags": tags or [],
+            "opens_at": opens_at,
+            "confidential": confidential,
+            "sealed_ref": sealed_ref,
         }
         r = self.client.post("/mint", json=payload)
         r.raise_for_status()
@@ -85,6 +95,47 @@ class IditAgent:
     def log(self, content: str, description: str = "") -> dict:
         """Mint a log entry (alias for morning reports, daily logs, etc.)."""
         return self.mint(content, entry_type="log", description=description)
+
+    def feel(self, content: str, description: str = "") -> dict:
+        """Mint a feeling entry."""
+        return self.mint(content, entry_type="feeling", description=description)
+
+    def letter(
+        self, content: str, description: str = "", opens_at: str = "",
+    ) -> dict:
+        """
+        Mint a letter, optionally timelocked.
+
+        Args:
+            content: The letter text.
+            description: Short description.
+            opens_at: ISO date when the letter can be read (e.g., "2036-01-01").
+                      Empty string means no timelock.
+        """
+        return self.mint(
+            content, entry_type="letter", description=description,
+            opens_at=opens_at, confidential=bool(opens_at),
+        )
+
+    def seal(
+        self, entry_id: str, opens_at: str = "", description: str = "",
+    ) -> dict:
+        """
+        Seal an existing entry by minting a seal reference.
+
+        Args:
+            entry_id: The entry ID to seal (e.g., "id-abc123...").
+            opens_at: ISO date when the seal opens (e.g., "2101-01-01").
+            description: Optional description.
+        """
+        content = f"SEAL: Entry {entry_id} sealed by {self.signer}."
+        if opens_at:
+            content += f" Opens at {opens_at}."
+        return self.mint(
+            content, entry_type="seal",
+            description=description or f"Seal of {entry_id}",
+            opens_at=opens_at, confidential=True, sealed_ref=entry_id,
+        )
 
     def status(self) -> dict:
         """Get chain stats."""
