@@ -2,6 +2,8 @@
 
 Drop-in library for AI agents to sign entries to a [Personal Idit](https://github.com/idit-life/personal-idit) chain.
 
+**Status: alpha.** This is a thin HTTP client wrapper. It has not been independently security audited. Review the code before use.
+
 ## Install
 
 ```bash
@@ -37,6 +39,7 @@ agent = IditAgent(
     server="http://localhost:18793",  # server URL
     model="claude-opus-4-6",    # model identifier (stored in metadata)
     node="local",             # node identifier
+    api_key="your-api-key",   # optional, for servers with IDIT_API_KEY set
 )
 
 # Mint entries by type

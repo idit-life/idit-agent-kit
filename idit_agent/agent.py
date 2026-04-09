@@ -17,6 +17,8 @@ class IditAgent:
                Stored in chain metadata so you always know what model signed what.
         node: Node identifier. Default: "local"
         timeout: HTTP timeout in seconds. Default: 30
+        api_key: Optional API key for authenticated servers (IDIT_API_KEY).
+                 Sent as X-API-Key header on all requests.
     """
 
     def __init__(
@@ -26,12 +28,15 @@ class IditAgent:
         model: str = "",
         node: str = "local",
         timeout: float = 30,
+        api_key: str = "",
     ):
         self.signer = signer
         self.server = server.rstrip("/")
         self.model = model
         self.node = node
-        self.client = httpx.Client(base_url=self.server, timeout=timeout)
+        self._api_key = api_key
+        headers = {"X-API-Key": api_key} if api_key else {}
+        self.client = httpx.Client(base_url=self.server, timeout=timeout, headers=headers)
 
     def mint(
         self,
