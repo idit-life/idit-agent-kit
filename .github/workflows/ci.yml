@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install httpx>=0.25.0 pytest>=7.0
+
+      - name: Lint - syntax check
+        run: |
+          python -m py_compile idit_agent/agent.py
+          python -m py_compile idit_agent/__init__.py
+
+      - name: Run tests
+        run: pytest test_agent.py -v
